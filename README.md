@@ -164,6 +164,22 @@ Runner requirements:
 - pass canonical `BOUNDS` to every optimizer;
 - write one JSON file per run using the unified schema.
 
+## Run Final L-SHADE Pipeline
+
+Run the frozen L-SHADE optimizer, export per-run JSON, generate all diagnostic
+and physical validation plots, and write the final summary:
+
+```powershell
+python scripts/run_final_lshade.py
+```
+
+Generated outputs:
+
+- `results/raw/lshade/`: per-run JSON files
+- `results/figures/lshade/`: convergence, archive, diversity, population size,
+  adaptive F/CR, power curve, and control-law plots
+- `results/summary/lshade_summary.json`: best-run summary and validation checks
+
 ## Plot Convergence
 
 The convergence analysis module is not implemented yet. Intended command:

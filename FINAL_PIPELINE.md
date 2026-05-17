@@ -2,6 +2,45 @@
 
 Roadmap and audit state after moving notebook code into the package structure.
 
+# Final L-SHADE Execution Pipeline
+
+Entry point:
+
+```powershell
+python scripts/run_final_lshade.py
+```
+
+The final L-SHADE pipeline runs the frozen package implementation only. It uses
+one shared Monte Carlo wind sample generated from `MC_SEED = 999`, one shared
+objective, canonical bounds, and three deterministic optimizer seeds.
+
+Generated outputs:
+
+- JSON results: `results/raw/lshade/`
+- diagnostics plots: `results/figures/lshade/`
+- physical validation plots: `results/figures/lshade/`
+- summary JSON: `results/summary/lshade_summary.json`
+
+Validation checks printed and saved:
+
+- `best_J_nonincreasing`
+- `diversity_nonzero`
+- `archive_used`
+- `adaptive_updates_present`
+- `final_theta_inside_bounds`
+- `power_curve_finite`
+
+Available diagnostics:
+
+- convergence: best and mean objective by evaluation
+- archive dynamics
+- population diversity
+- linear population reduction
+- adaptive `F` and `CR` dynamics
+- successful adaptive updates
+- best-theta power curve
+- best-theta control laws
+
 ## Stage 1: Problem Formalization
 
 Goal: define the physical model, control parameterization, wind model, constants, objective weights, and optimization bounds.
