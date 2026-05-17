@@ -1,0 +1,42 @@
+{
+  "best_final_J": -0.28081443873594103,
+  "theta_best": [
+    0.527995925078022,
+    1.1908841703745985,
+    0.09941736829390857,
+    0.312623441747351,
+    0.1261847033071951
+  ],
+  "runtime_sec": 1.0442928000120446,
+  "best_run_idx": 10,
+  "max_power_MW": 6.186887901303188,
+  "validation_checks": {
+    "best_J_nonincreasing": true,
+    "final_theta_inside_bounds": true,
+    "power_curve_finite": true
+  },
+  "generated_figures": [
+    "convergence.png",
+    "power_curve.png",
+    "control_laws.png"
+  ],
+  "n_runs": 15,
+  "max_evals": 5000,
+  "run_seeds": [
+    202401,
+    202402,
+    202403,
+    202404,
+    202405,
+    202406,
+    202407,
+    202408,
+    202409,
+    202410,
+    202411,
+    202412,
+    202413,
+    202414,
+    202415
+  ]
+}

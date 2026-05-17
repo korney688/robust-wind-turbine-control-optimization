@@ -1,0 +1,53 @@
+{
+  "best_final_J": -0.28920788621370996,
+  "theta_best": [
+    0.0,
+    1.184524153924608,
+    0.14878303651045213,
+    0.011389983571958898,
+    0.16071947608112824
+  ],
+  "runtime_sec": 2.5295495000027586,
+  "best_run_idx": 0,
+  "final_population_size": 4,
+  "archive_final_size": 4,
+  "max_power_MW": 5.65712209958895,
+  "validation_checks": {
+    "best_J_nonincreasing": true,
+    "diversity_nonzero": true,
+    "archive_used": true,
+    "adaptive_updates_present": true,
+    "final_theta_inside_bounds": true,
+    "power_curve_finite": true
+  },
+  "generated_figures": [
+    "convergence.png",
+    "archive_dynamics.png",
+    "population_diversity.png",
+    "population_size.png",
+    "adaptive_F.png",
+    "adaptive_CR.png",
+    "successful_updates.png",
+    "power_curve.png",
+    "control_laws.png"
+  ],
+  "n_runs": 15,
+  "max_evals": 5000,
+  "run_seeds": [
+    202401,
+    202402,
+    202403,
+    202404,
+    202405,
+    202406,
+    202407,
+    202408,
+    202409,
+    202410,
+    202411,
+    202412,
+    202413,
+    202414,
+    202415
+  ]
+}
