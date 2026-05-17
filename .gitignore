@@ -1,1 +1,3 @@
 /external/cmaes_results.json
+__pycache__/
+*.pyc
