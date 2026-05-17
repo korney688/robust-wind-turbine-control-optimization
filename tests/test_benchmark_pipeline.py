@@ -2,7 +2,7 @@ from wind_robust_opt.experiments.run_benchmark import run_benchmark
 from wind_robust_opt.io.result_schema import load_result_json
 
 
-def test_random_search_benchmark_pipeline(tmp_path):
+def test_lshade_benchmark_pipeline(tmp_path):
     first_dir = tmp_path / "first"
     second_dir = tmp_path / "second"
 
@@ -22,7 +22,7 @@ def test_random_search_benchmark_pipeline(tmp_path):
 
     loaded = load_result_json(first_dir / "run_000.json")
 
-    assert loaded["method"] == "RandomSearch"
+    assert loaded["method"] == "LShade"
     assert loaded["n_evals"] == 10
     assert loaded["theta_best"] == first_results[0].theta_best
     assert len(loaded["history"]) == 10

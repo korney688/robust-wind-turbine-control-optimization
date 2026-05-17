@@ -51,6 +51,10 @@ def test_lshade_smoke_and_json_export(tmp_path):
     assert result.history
     assert optimizer.debug_info["archive_size"] > 0
     assert optimizer.debug_info["archive_size"] <= optimizer.population_size
+    assert (
+        optimizer.debug_info["archive_size"]
+        <= optimizer.debug_info["final_population_size"]
+    )
     assert optimizer.debug_info["pbest_selection_count"] > 0
     assert math.isfinite(result.final_J)
 
@@ -65,9 +69,18 @@ def test_lshade_smoke_and_json_export(tmp_path):
     assert loaded["method"] == "LShade"
     assert loaded["n_evals"] == result.n_evals
     assert loaded["theta_best"] == result.theta_best
-    assert loaded["metadata"]["algorithm"] == "L-SHADE-stage3-no-LPSR"
+    assert loaded["metadata"]["algorithm"] == "L-SHADE"
     assert loaded["metadata"]["mutation"] == "current-to-pbest/1"
     assert loaded["metadata"]["archive_enabled"] is True
+    assert loaded["metadata"]["linear_population_reduction"] is True
+    assert (
+        loaded["metadata"]["final_population_size"]
+        <= loaded["metadata"]["initial_population_size"]
+    )
+    assert (
+        loaded["metadata"]["final_population_size"]
+        >= loaded["metadata"]["min_population_size"]
+    )
     assert loaded["metadata"]["adaptive_F"] is True
     assert loaded["metadata"]["adaptive_CR"] is True
     assert loaded["metadata"]["memory_size"] == 6
@@ -80,6 +93,9 @@ def test_lshade_smoke_and_json_export(tmp_path):
         "mean_J",
         "std_J",
         "archive_size",
+        "population_size",
+        "target_population_size",
+        "population_reductions",
         "population_diversity",
         "mean_F",
         "std_F",
@@ -92,6 +108,11 @@ def test_lshade_smoke_and_json_export(tmp_path):
     }
     assert diagnostics[0]["generation"] == 0
     assert diagnostics[-1]["eval"] == result.n_evals
+    population_sizes = [entry["population_size"] for entry in diagnostics]
+    assert all(
+        next_size <= size
+        for size, next_size in zip(population_sizes, population_sizes[1:])
+    )
     assert any(entry["successful_updates"] > 0 for entry in diagnostics)
     assert all(math.isfinite(entry["mean_F"]) for entry in diagnostics)
     assert all(math.isfinite(entry["std_F"]) for entry in diagnostics)

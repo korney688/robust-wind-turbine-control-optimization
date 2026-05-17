@@ -20,6 +20,7 @@ from wind_robust_opt.analysis.lshade_diagnostics import (  # noqa: E402
     plot_control_laws,
     plot_convergence,
     plot_population_diversity,
+    plot_population_size,
     plot_power_curve,
 )
 from wind_robust_opt.experiments.run_benchmark import run_benchmark  # noqa: E402
@@ -38,6 +39,8 @@ def _validation_checks(result: dict) -> dict:
     best_values = [entry["best_J"] for entry in diagnostics]
     archive_sizes = [entry["archive_size"] for entry in diagnostics]
     diversities = [entry["population_diversity"] for entry in diagnostics]
+    population_sizes = [entry["population_size"] for entry in diagnostics]
+    reductions = [entry["population_reductions"] for entry in diagnostics]
     mean_F = [entry["mean_F"] for entry in diagnostics]
     mean_CR = [entry["mean_CR"] for entry in diagnostics]
     successful_updates = [entry["successful_updates"] for entry in diagnostics]
@@ -54,6 +57,7 @@ def _validation_checks(result: dict) -> dict:
         "archive_size_increases_or_stays": archive_sizes[-1] >= archive_sizes[0],
         "diversity_decreased": diversities[-1] <= diversities[0],
         "diversity_not_collapsed_to_zero": diversities[-1] > 1e-12,
+        "population_size_decreased": population_sizes[-1] < population_sizes[0],
         "theta_best_inside_bounds": bool(
             np.all(theta_best >= BOUNDS[:, 0])
             and np.all(theta_best <= BOUNDS[:, 1])
@@ -69,6 +73,10 @@ def _validation_checks(result: dict) -> dict:
         "final_diversity": float(diversities[-1]),
         "initial_archive_size": int(archive_sizes[0]),
         "final_archive_size": int(archive_sizes[-1]),
+        "initial_population_size": int(population_sizes[0]),
+        "final_population_size": int(population_sizes[-1]),
+        "min_population_size": int(result["metadata"]["min_population_size"]),
+        "total_reductions": int(sum(reductions)),
         "initial_mean_F": float(mean_F[0]),
         "final_mean_F": float(mean_F[-1]),
         "initial_mean_CR": float(mean_CR[0]),
@@ -87,6 +95,7 @@ def main() -> None:
         ("convergence.png", plot_convergence),
         ("archive_dynamics.png", plot_archive_dynamics),
         ("population_diversity.png", plot_population_diversity),
+        ("population_size.png", plot_population_size),
         ("power_curve.png", plot_power_curve),
         ("control_laws.png", plot_control_laws),
     ]

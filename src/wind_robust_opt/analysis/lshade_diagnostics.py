@@ -80,6 +80,28 @@ def plot_population_diversity(result: dict, save_path: str | Path | None = None)
     return fig, ax
 
 
+def plot_population_size(result: dict, save_path: str | Path | None = None):
+    diagnostics = _diagnostics(result)
+    evals = [entry["eval"] for entry in diagnostics]
+    population_size = [entry["population_size"] for entry in diagnostics]
+    target_population_size = [
+        entry["target_population_size"]
+        for entry in diagnostics
+    ]
+
+    fig, ax = plt.subplots()
+    ax.plot(evals, population_size, label="population_size")
+    ax.plot(evals, target_population_size, label="target_population_size")
+    ax.set_xlabel("Objective evaluations")
+    ax.set_ylabel("Population size")
+    ax.set_title("L-SHADE population size reduction")
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+
+    _save_if_requested(fig, save_path)
+    return fig, ax
+
+
 def plot_adaptive_parameters(result: dict, save_dir: str | Path | None = None):
     diagnostics = _diagnostics(result)
     evals = [entry["eval"] for entry in diagnostics]

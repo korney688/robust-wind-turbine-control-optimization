@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from wind_robust_opt.io.result_schema import save_result_json
-from wind_robust_opt.optimizers.random_search import RandomSearchOptimizer
+from wind_robust_opt.optimizers.lshade_optimizer import LShadeOptimizer
 from wind_robust_opt.problem.bounds import BOUNDS
 from wind_robust_opt.problem.constants import MC_SEED
 from wind_robust_opt.problem.objective import RobustWindObjective
@@ -15,7 +15,7 @@ RUN_SEEDS = [
     202402,
     202403,
 ]
-OUTPUT_DIR = Path("results/raw/random_search")
+OUTPUT_DIR = Path("results/raw/lshade_skeleton")
 
 
 def run_benchmark(
@@ -28,7 +28,7 @@ def run_benchmark(
 
     wind_samples = generate_wind_samples(seed=MC_SEED)
     objective = RobustWindObjective(wind_samples)
-    optimizer = RandomSearchOptimizer(mc_seed=MC_SEED)
+    optimizer = LShadeOptimizer(mc_seed=MC_SEED)
 
     results = []
     for run_id, seed in enumerate(run_seeds):
