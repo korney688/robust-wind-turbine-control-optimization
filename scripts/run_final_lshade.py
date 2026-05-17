@@ -24,6 +24,9 @@ from wind_robust_opt.analysis.lshade_diagnostics import (  # noqa: E402
     plot_population_size,
     plot_power_curve,
 )
+from wind_robust_opt.experiments.config_loader import (  # noqa: E402
+    load_experiment_config,
+)
 from wind_robust_opt.experiments.run_benchmark import run_benchmark  # noqa: E402
 from wind_robust_opt.io.result_schema import optimizer_result_to_dict  # noqa: E402
 from wind_robust_opt.problem.bounds import BOUNDS  # noqa: E402
@@ -105,7 +108,7 @@ def _save_plots(result: dict) -> None:
         plt.close(fig)
 
 
-def _summary_payload(best_result: dict) -> dict:
+def _summary_payload(best_result: dict, config: dict) -> dict:
     diagnostics = best_result["metadata"]["generation_diagnostics"]
     validation_checks = _validation_checks(best_result)
 
@@ -121,6 +124,12 @@ def _summary_payload(best_result: dict) -> dict:
         "max_power_MW": _max_power_mw(best_result),
         "validation_checks": validation_checks,
         "generated_figures": list(GENERATED_FIGURES),
+        "n_runs": int(config["n_runs"]),
+        "max_evals": int(config["max_evals"]),
+        "run_seeds": [
+            int(seed)
+            for seed in config["run_seeds"][: int(config["n_runs"])]
+        ],
     }
 
 
@@ -153,16 +162,24 @@ def _print_summary(summary: dict, best_result: dict) -> None:
 
 
 def main() -> None:
+    config = load_experiment_config()
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     SUMMARY_DIR.mkdir(parents=True, exist_ok=True)
+    for old_result in RAW_DIR.glob("run_*.json"):
+        old_result.unlink()
 
-    results = run_benchmark(output_dir=RAW_DIR)
+    run_seeds = config["run_seeds"][: config["n_runs"]]
+    results = run_benchmark(
+        output_dir=RAW_DIR,
+        run_seeds=run_seeds,
+        max_evals=config["max_evals"],
+    )
     best_result = min(results, key=lambda item: item.final_J)
     best_payload = optimizer_result_to_dict(best_result)
 
     _save_plots(best_payload)
 
-    summary = _summary_payload(best_payload)
+    summary = _summary_payload(best_payload, config)
     with SUMMARY_PATH.open("w", encoding="utf-8") as file:
         json.dump(summary, file, indent=2, ensure_ascii=False)
 

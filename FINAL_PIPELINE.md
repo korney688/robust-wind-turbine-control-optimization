@@ -12,7 +12,27 @@ python scripts/run_final_lshade.py
 
 The final L-SHADE pipeline runs the frozen package implementation only. It uses
 one shared Monte Carlo wind sample generated from `MC_SEED = 999`, one shared
-objective, canonical bounds, and three deterministic optimizer seeds.
+objective, canonical bounds, and deterministic optimizer seeds from the
+experiment config.
+
+Experiment configuration:
+
+```text
+configs/experiment_config.json
+```
+
+This file controls:
+
+- `n_runs`
+- `max_evals`
+- `run_seeds`
+
+To change the final experiment size or optimizer seeds, edit
+`configs/experiment_config.json` and rerun:
+
+```powershell
+python scripts/run_final_lshade.py
+```
 
 Generated outputs:
 

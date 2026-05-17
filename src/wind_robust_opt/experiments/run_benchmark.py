@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from wind_robust_opt.experiments.config_loader import load_experiment_config
 from wind_robust_opt.io.result_schema import save_result_json
 from wind_robust_opt.optimizers.lshade_optimizer import LShadeOptimizer
 from wind_robust_opt.problem.bounds import BOUNDS
@@ -8,23 +9,25 @@ from wind_robust_opt.problem.objective import RobustWindObjective
 from wind_robust_opt.problem.wind_distribution import generate_wind_samples
 
 
-N_RUNS = 3
-MAX_EVALS = 100
-RUN_SEEDS = [
-    202401,
-    202402,
-    202403,
-]
-OUTPUT_DIR = Path("results/raw/lshade_skeleton")
+OUTPUT_DIR = Path("results/raw/lshade")
 
 
 def run_benchmark(
     output_dir: str | Path = OUTPUT_DIR,
     run_seeds: list[int] | None = None,
-    max_evals: int = MAX_EVALS,
+    max_evals: int | None = None,
 ):
+    config = load_experiment_config()
     output_dir = Path(output_dir)
-    run_seeds = RUN_SEEDS[:N_RUNS] if run_seeds is None else list(run_seeds)
+
+    if run_seeds is None:
+        n_runs = int(config["n_runs"])
+        run_seeds = list(config["run_seeds"][:n_runs])
+    else:
+        run_seeds = list(run_seeds)
+
+    if max_evals is None:
+        max_evals = int(config["max_evals"])
 
     wind_samples = generate_wind_samples(seed=MC_SEED)
     objective = RobustWindObjective(wind_samples)

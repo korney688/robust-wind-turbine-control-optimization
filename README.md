@@ -164,13 +164,19 @@ Runner requirements:
 - pass canonical `BOUNDS` to every optimizer;
 - write one JSON file per run using the unified schema.
 
-## Run Final L-SHADE Pipeline
+## Run Final L-SHADE Experiment
 
 Run the frozen L-SHADE optimizer, export per-run JSON, generate all diagnostic
 and physical validation plots, and write the final summary:
 
 ```powershell
 python scripts/run_final_lshade.py
+```
+
+Experiment parameters are loaded from:
+
+```text
+configs/experiment_config.json
 ```
 
 Generated outputs:
