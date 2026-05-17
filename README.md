@@ -1,18 +1,13 @@
 # Robust Wind Turbine Control Optimization
 
-Robust optimization project for wind turbine control under stochastic wind. The codebase is being moved from notebooks into a package with one shared problem definition, one objective, deterministic Monte Carlo sampling, and comparable optimizer outputs.
+This project optimizes wind turbine control parameters under stochastic wind.
+The implementation uses a shared physical model, deterministic Monte Carlo wind
+sampling, reproducible optimizer runs, structured JSON export, and diagnostic
+plots.
 
-## Problem
+## Problem Statement
 
-Power model:
-
-```text
-P(v) = 0.5 * rho * A * Cp(lambda, beta) * v^3
-lambda = omega * R / v
-v ~ Weibull(k, c)
-```
-
-Control policy:
+The control policy maps wind speed to pitch angle and rotor speed:
 
 ```text
 beta(v) = a0 + a1 * (v - v_rated) + a2 * (v - v_rated)^2
@@ -20,188 +15,93 @@ omega(v) = b0 + b1 * v
 theta = (a0, a1, a2, b0, b1)
 ```
 
+Wind speed is sampled from a Weibull distribution. The optimization task is to
+find robust control parameters for expected power production while penalizing
+variance, rated-power violations, and invalid parameter behavior.
+
 ## Objective
 
-All methods must optimize exactly:
+All optimizers use the same objective:
 
 ```text
 J(theta) =
-    - E[P]
-    + alpha * Var(P)
-    + gamma * E[max(0, P - P_rated)^2]
-    + delta * penalty
+    - E[P / P_rated]
+    + alpha * Var(P / P_rated)
+    + gamma * E[max(0, P / P_rated - 1)^2]
+    + delta * penalty(theta)
 ```
 
-The objective must receive a fixed Monte Carlo sample:
+The objective receives fixed Monte Carlo wind samples generated once from
+`MC_SEED`.
 
-```text
-wind_samples = generate_wind_samples(seed=MC_SEED)
-J = objective(theta, wind_samples)
-```
+## Implemented Optimizers
 
-Optimizers must not sample wind internally.
+- `L-SHADE`: current-to-pbest/1 mutation, external archive, adaptive F/CR
+  success-history memories, linear population size reduction, diagnostics, and
+  JSON export.
+- `Random Search`: sanity-check baseline and reference for convergence quality.
 
-## Structure
+## Reproducibility
+
+Canonical constants and bounds live in `src/wind_robust_opt/problem/`.
+
+- `MC_SEED = 999` controls Monte Carlo wind sampling.
+- `configs/experiment_config.json` controls `n_runs`, `max_evals`, and
+  optimizer run seeds.
+- Optimizers use local NumPy generators seeded per run.
+- Every run exports one JSON file through the shared `OptimizerResult` schema.
+
+## Project Structure
 
 ```text
 configs/
   experiment_config.json
-  methods_config.json
-  problem_config.json
-external/
-  cmaes.ipynb
-  SPSO-2011.ipynb
-  cmaes_results.json
-  spso2011_results.json
 results/
+  figures/
+  raw/
+  summary/
 scripts/
+  run_final_lshade.py
+  run_random_search_baseline.py
+src/wind_robust_opt/
+  analysis/
+  experiments/
+  io/
+  optimizers/
+  problem/
 tests/
-src/
-  wind_robust_opt/
-    problem/
-      constants.py
-      bounds.py
-      objective.py
-      wind_distribution.py
-      parameter_names.py
-    optimizers/
-      base.py
-      lshade_optimizer.py
-    analysis/
-    experiments/
-    io/
-      result_schema.py
 ```
-
-## Methods
-
-- `CMA-ES`: legacy notebook result exists in `external/cmaes_results.json`; package integration is still needed.
-- `SPSO-2011`: legacy notebook result exists in `external/spso2011_results.json`; package integration is still needed.
-- `L-SHADE`: placeholder file exists at `src/wind_robust_opt/optimizers/lshade_optimizer.py`; implementation is pending.
-- `LLM optimizer`: planned comparison method; no package implementation is present yet.
-
-Every method must use shared constants, shared bounds, shared objective, shared `MC_SEED`, shared history format, and shared JSON schema.
-
-## Reproducibility
-
-Canonical values live in `src/wind_robust_opt/problem/constants.py` and `src/wind_robust_opt/problem/bounds.py`.
-
-```text
-RHO = 1.225
-ROTOR_RADIUS = 50.0
-P_RATED = 5_000_000
-V_RATED = 12.0
-CP_MAX = 16/27
-WEIBULL_K = 2.0
-WEIBULL_C = 8.0
-V_CUT_IN = 3.0
-V_CUT_OUT = 25.0
-BETA_MIN = 0.0
-BETA_MAX = 30.0
-OMEGA_MIN = 0.0
-OMEGA_MAX = 2.0
-N_MC_SAMPLES = 1000
-MC_SEED = 999
-ALPHA = 0.05
-GAMMA = 10.0
-DELTA = 10.0
-```
-
-```text
-BOUNDS =
-[[ 0.0, 30.0],
- [-5.0,  5.0],
- [-1.0,  1.0],
- [ 0.0,  2.0],
- [ 0.0,  0.2]]
-```
-
-Run seeds control optimizer randomness only. `MC_SEED` controls wind sampling only.
-
-Known audit issue: `configs/problem_config.json` currently duplicates and diverges from canonical constants (`n_mc_samples`, `alpha`, `delta`). Treat `constants.py` and `bounds.py` as authoritative until the config is removed or synchronized.
-
-## JSON Result Schema
-
-Each optimizer run must export one `OptimizerResult`:
-
-```json
-{
-  "method": "L-SHADE",
-  "run_id": 0,
-  "seed": 202401,
-  "mc_seed": 999,
-  "dimension": 5,
-  "max_evals": 5000,
-  "n_evals": 5000,
-  "runtime_sec": 0.0,
-  "final_J": 0.0,
-  "theta_best": [0.0, 0.0, 0.0, 0.0, 0.0],
-  "history": [
-    {
-      "eval": 1,
-      "best_J": 0.0,
-      "theta_best": [0.0, 0.0, 0.0, 0.0, 0.0]
-    }
-  ],
-  "metadata": {}
-}
-```
-
-Legacy files in `external/` are aggregate notebook outputs and do not match this per-run schema yet.
-
-## Run Experiments
-
-The unified runner is not implemented yet. Intended command:
-
-```powershell
-python -m wind_robust_opt.experiments.run_benchmark
-```
-
-Runner requirements:
-
-- generate `wind_samples` once from `MC_SEED`;
-- pass the same objective callable to every optimizer;
-- pass canonical `BOUNDS` to every optimizer;
-- write one JSON file per run using the unified schema.
 
 ## Run Final L-SHADE Experiment
-
-Run the frozen L-SHADE optimizer, export per-run JSON, generate all diagnostic
-and physical validation plots, and write the final summary:
 
 ```powershell
 python scripts/run_final_lshade.py
 ```
 
-Experiment parameters are loaded from:
-
-```text
-configs/experiment_config.json
-```
-
 Generated outputs:
 
-- `results/raw/lshade/`: per-run JSON files
-- `results/figures/lshade/`: convergence, archive, diversity, population size,
-  adaptive F/CR, power curve, and control-law plots
-- `results/summary/lshade_summary.json`: best-run summary and validation checks
+- `results/raw/lshade/`
+- `results/figures/lshade/`
+- `results/summary/lshade_summary.json`
 
-## Plot Convergence
-
-The convergence analysis module is not implemented yet. Intended command:
+## Run Diagnostics and Analysis
 
 ```powershell
-python -m wind_robust_opt.analysis.plot_convergence
+python scripts/run_final_lshade.py
 ```
 
-Plots must consume only unified `history` entries with `eval`, `best_J`, and `theta_best`.
+The final L-SHADE command runs the experiment, exports JSON, builds all
+diagnostic plots, builds physical validation plots, and writes the final summary.
 
-## Statistical Comparison
-
-The statistical comparison module is not implemented yet. Intended command:
+## Baseline Random Search
 
 ```powershell
-python -m wind_robust_opt.analysis.compare_methods
+python scripts/run_random_search_baseline.py
 ```
 
-Comparison must use final `J` values from repeated runs produced by the same benchmark runner, same objective, same bounds, and same Monte Carlo sample.
+Random Search uses the same objective, bounds, `MC_SEED`, run seeds, and
+evaluation budget as L-SHADE.
+
+## Run CMA-ES Pipeline
+
+## Run SPSO-2011 Pipeline

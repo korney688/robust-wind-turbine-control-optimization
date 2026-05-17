@@ -1,202 +1,94 @@
-# Final Pipeline
+# Final L-SHADE Pipeline
 
-Roadmap and audit state after moving notebook code into the package structure.
+This guide describes the final execution path for the frozen L-SHADE optimizer
+and the Random Search baseline.
 
-# Final L-SHADE Execution Pipeline
+## Experiment Configuration
 
-Entry point:
-
-```powershell
-python scripts/run_final_lshade.py
-```
-
-The final L-SHADE pipeline runs the frozen package implementation only. It uses
-one shared Monte Carlo wind sample generated from `MC_SEED = 999`, one shared
-objective, canonical bounds, and deterministic optimizer seeds from the
-experiment config.
-
-Experiment configuration:
+Experiment parameters are loaded from:
 
 ```text
 configs/experiment_config.json
 ```
 
-This file controls:
+The config controls:
 
 - `n_runs`
 - `max_evals`
 - `run_seeds`
 
-To change the final experiment size or optimizer seeds, edit
-`configs/experiment_config.json` and rerun:
+The benchmark uses the canonical bounds, the shared robust objective, and one
+Monte Carlo wind sample generated from `MC_SEED = 999`.
+
+## Run Final Experiment
 
 ```powershell
 python scripts/run_final_lshade.py
 ```
 
-Generated outputs:
+The command runs L-SHADE, saves per-run JSON, builds diagnostics and physical
+validation plots, and writes a summary JSON.
 
-- JSON results: `results/raw/lshade/`
-- diagnostics plots: `results/figures/lshade/`
-- physical validation plots: `results/figures/lshade/`
-- summary JSON: `results/summary/lshade_summary.json`
+## Generated Outputs
 
-Validation checks printed and saved:
-
-- `best_J_nonincreasing`
-- `diversity_nonzero`
-- `archive_used`
-- `adaptive_updates_present`
-- `final_theta_inside_bounds`
-- `power_curve_finite`
-
-Available diagnostics:
-
-- convergence: best and mean objective by evaluation
-- archive dynamics
-- population diversity
-- linear population reduction
-- adaptive `F` and `CR` dynamics
-- successful adaptive updates
-- best-theta power curve
-- best-theta control laws
-
-## Stage 1: Problem Formalization
-
-Goal: define the physical model, control parameterization, wind model, constants, objective weights, and optimization bounds.
-
-Status: partially complete.
-
-Ready: canonical constants are centralized in `src/wind_robust_opt/problem/constants.py`; canonical bounds are centralized in `src/wind_robust_opt/problem/bounds.py`; parameter names are isolated in `parameter_names.py`.
-
-Remaining: remove or synchronize `configs/problem_config.json`, because it duplicates problem values and currently diverges from canonical constants.
-
-Risks: duplicate config values can silently change experiments if a runner reads JSON instead of `constants.py`.
-
-## Stage 2: Core Physics Implementation
-
-Goal: implement the turbine power model, `Cp(lambda, beta)`, control policy evaluation, operating range handling, clipping, and penalty terms in `problem/`.
-
-Status: not complete.
-
-Ready: package location exists; constants and bounds are available.
-
-Remaining: implement physics functions in shared problem modules, not inside optimizers.
-
-Risks: if physics is copied into optimizers, methods will no longer be comparable.
-
-## Stage 3: Unified Objective
-
-Goal: implement exactly one shared objective:
+JSON results:
 
 ```text
-J(theta) =
-    - E[P]
-    + alpha * Var(P)
-    + gamma * E[max(0, P - P_rated)^2]
-    + delta * penalty
+results/raw/lshade/
 ```
 
-Status: not complete.
+Figures:
 
-Ready: `src/wind_robust_opt/problem/objective.py` exists.
+```text
+results/figures/lshade/
+```
 
-Remaining: replace the placeholder with the canonical objective using precomputed `wind_samples`; keep Monte Carlo sampling outside the optimizer.
+Summary:
 
-Risks: method-specific objectives or internal resampling would invalidate the benchmark.
+```text
+results/summary/lshade_summary.json
+```
 
-## Stage 4: CMA-ES Integration
+## Generated Diagnostics
 
-Goal: integrate CMA-ES as a package optimizer using the shared objective, canonical bounds, optimizer seed, history entries, and JSON schema.
+- convergence
+- archive dynamics
+- diversity
+- adaptive F
+- adaptive CR
+- successful updates
+- population reduction
+- power curve
+- control laws
 
-Status: not complete.
+## Validation Checks
 
-Ready: notebook and legacy aggregate result exist in `external/cmaes.ipynb` and `external/cmaes_results.json`.
+- `best_J_nonincreasing`
+- `archive_used`
+- `adaptive_updates_present`
+- `theta_inside_bounds`
+- `power_curve_finite`
 
-Remaining: move only optimizer orchestration into `optimizers/`; adapt output to one `OptimizerResult` per run.
+## Baseline
 
-Risks: the legacy JSON contains `n_runs`, `algo_seeds`, aggregate `final_J`, and raw histories, which do not match the required per-run schema.
+```powershell
+python scripts/run_random_search_baseline.py
+```
 
-## Stage 5: SPSO-2011 Integration
+Random Search uses the same experiment configuration, objective, Monte Carlo
+seed, bounds, run seeds, and evaluation budget as L-SHADE. It exports JSON,
+minimal convergence and physical validation plots, and a summary JSON.
 
-Goal: integrate SPSO-2011 as a package optimizer using the shared objective, canonical bounds, optimizer seed, history entries, and JSON schema.
+Baseline outputs:
 
-Status: not complete.
+```text
+results/raw/random_search/
+results/figures/random_search/
+results/summary/random_search_summary.json
+```
 
-Ready: notebook and legacy aggregate result exist in `external/SPSO-2011.ipynb` and `external/spso2011_results.json`.
+## Reserved Pipelines
 
-Remaining: move optimizer logic into `optimizers/`; convert raw best-value histories to `HistoryEntry(eval, best_J, theta_best)`.
+## CMA-ES
 
-Risks: missing `theta_best` in raw histories can make convergence analysis incomplete unless the package runner records it during evaluation.
-
-## Stage 6: L-SHADE Implementation
-
-Goal: implement L-SHADE with the same objective callable, bounds, evaluation budget, seed policy, and result interface as all other methods.
-
-Status: not complete.
-
-Ready: placeholder file exists at `src/wind_robust_opt/optimizers/lshade_optimizer.py`.
-
-Remaining: implement optimizer state, bounded candidate repair, archive logic, adaptive memories, evaluation counting, history recording, runtime measurement, and metadata export.
-
-Risks: adaptive population and archive logic can hide extra objective calls unless `n_evals` is counted centrally.
-
-## Stage 7: Unified Benchmark Runner
-
-Goal: run all enabled methods across the same run seeds, same `MC_SEED`, same `BOUNDS`, same objective, and same `max_evals`.
-
-Status: not complete.
-
-Ready: `configs/experiment_config.json` and `configs/methods_config.json` exist.
-
-Remaining: implement `src/wind_robust_opt/experiments/run_benchmark.py`; generate wind samples once per benchmark configuration; pass an objective callable into every optimizer.
-
-Risks: `experiment_config.json` currently says `n_runs = 30` but lists only 5 `run_seeds`.
-
-## Stage 8: JSON Export Consistency
-
-Goal: export every run as one `OptimizerResult` with the required fields and typed histories.
-
-Status: partially complete.
-
-Ready: `HistoryEntry` and `OptimizerResult` dataclasses exist in `src/wind_robust_opt/optimizers/base.py`.
-
-Remaining: add missing `runtime_sec` to `OptimizerResult`; implement `src/wind_robust_opt/io/result_schema.py`; import `OptimizerResult` before using it in type annotations; convert dataclasses and NumPy values to JSON-safe types.
-
-Risks: `result_schema.py` currently references `OptimizerResult` without importing it and contains only a placeholder body.
-
-## Stage 9: Convergence Analysis
-
-Goal: plot comparable convergence curves from unified histories.
-
-Status: not complete.
-
-Ready: `src/wind_robust_opt/analysis/` directory exists.
-
-Remaining: implement loaders and plotting functions that consume only unified JSON records.
-
-Risks: mixing legacy raw histories with structured histories will make evaluation axes and best-theta traces ambiguous.
-
-## Stage 10: Statistical Comparison
-
-Goal: compare methods statistically using repeated final objective values produced under the same benchmark protocol.
-
-Status: not complete.
-
-Ready: legacy CMA-ES and SPSO-2011 final values exist as external reference data.
-
-Remaining: implement comparison after unified result export is stable; use only package-produced per-run JSON for final conclusions.
-
-Risks: legacy notebook outputs may have hidden differences in objective, bounds, or sampling and should not be mixed with final package runs without validation.
-
-## Stage 11: Presentation Preparation
-
-Goal: prepare final tables, convergence plots, method descriptions, reproducibility notes, and limitations for the course presentation.
-
-Status: not complete.
-
-Ready: project statement, package skeleton, and legacy notebook outputs exist.
-
-Remaining: finish the unified pipeline, rerun all methods through the package runner, generate plots, generate statistical tables, and document the final reproducibility setup.
-
-Risks: presenting notebook-derived and package-derived results together without schema and objective validation can lead to inconsistent conclusions.
+## SPSO-2011
