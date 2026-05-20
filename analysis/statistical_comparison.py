@@ -34,6 +34,7 @@ TABLES_DIR = ANALYSIS_DIR / "tables"
 DEFAULT_RESULT_FILES = [
     ROOT / "results" / "opro" / "opro_results.json",
     ROOT / "results" / "spso2011" / "spso2011_results.json",
+    ROOT / "results" / "cmaes" / "cmaes_results.json",
     ROOT / "results" / "lshade" / "lshade_results.json",
     ROOT / "results" / "randomsearch" / "randomsearch_results.json",
 ]
