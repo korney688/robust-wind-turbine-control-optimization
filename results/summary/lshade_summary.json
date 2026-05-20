@@ -1,17 +1,17 @@
 {
-  "best_final_J": -0.28920788621370996,
+  "best_final_J": -0.28920788621371,
   "theta_best": [
-    0.0,
-    1.184524153924608,
-    0.14878303651045213,
-    0.011389983571958898,
-    0.16071947608112824
+    6.701292739517022e-16,
+    1.1845241446060195,
+    0.14878303533922116,
+    0.011389976682498287,
+    0.16071947654499236
   ],
-  "runtime_sec": 2.5295495000027586,
+  "runtime_sec": 6.059127900000021,
   "best_run_idx": 0,
   "final_population_size": 4,
   "archive_final_size": 4,
-  "max_power_MW": 5.65712209958895,
+  "max_power_MW": 5.6571221252176045,
   "validation_checks": {
     "best_J_nonincreasing": true,
     "diversity_nonzero": true,
@@ -32,7 +32,7 @@
     "control_laws.png"
   ],
   "n_runs": 15,
-  "max_evals": 5000,
+  "max_evals": 20000,
   "run_seeds": [
     202401,
     202402,

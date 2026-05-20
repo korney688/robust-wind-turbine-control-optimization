@@ -1,6 +1,6 @@
 {
   "n_runs": 15,
-  "max_evals": 5000,
+  "max_evals": 20000,
   "run_seeds": [
     202401,
     202402,

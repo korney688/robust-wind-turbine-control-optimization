@@ -378,6 +378,9 @@ class LShadeOptimizer(BaseOptimizer):
                 )
 
         runtime_sec = time.perf_counter() - start
+        print(f"Total objective evaluations: {n_evals}")
+        print(f"Configured max_evals: {max_evals}")
+
         self.archive = [entry.copy() for entry in archive]
         self.M_F = memory_F.copy()
         self.M_CR = memory_CR.copy()

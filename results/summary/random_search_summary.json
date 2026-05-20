@@ -7,7 +7,7 @@
     0.312623441747351,
     0.1261847033071951
   ],
-  "runtime_sec": 1.0442928000120446,
+  "runtime_sec": 4.0638260999985505,
   "best_run_idx": 10,
   "max_power_MW": 6.186887901303188,
   "validation_checks": {
@@ -21,7 +21,7 @@
     "control_laws.png"
   ],
   "n_runs": 15,
-  "max_evals": 5000,
+  "max_evals": 20000,
   "run_seeds": [
     202401,
     202402,

@@ -15,6 +15,7 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt  # noqa: E402
 
+from aggregate_results import aggregate_job  # noqa: E402
 from wind_robust_opt.analysis.lshade_diagnostics import (  # noqa: E402
     plot_control_laws,
     plot_power_curve,
@@ -38,6 +39,7 @@ RAW_DIR = REPO_ROOT / "results" / "raw" / "random_search"
 FIGURE_DIR = REPO_ROOT / "results" / "figures" / "random_search"
 SUMMARY_DIR = REPO_ROOT / "results" / "summary"
 SUMMARY_PATH = SUMMARY_DIR / "random_search_summary.json"
+AGGREGATE_PATH = REPO_ROOT / "results" / "random_search" / "randomsearch_results.json"
 
 GENERATED_FIGURES = [
     "convergence.png",
@@ -171,9 +173,21 @@ def main() -> None:
     with SUMMARY_PATH.open("w", encoding="utf-8") as file:
         json.dump(summary, file, indent=2, ensure_ascii=False)
 
+    aggregate_job(
+        raw_dir=RAW_DIR,
+        out_path=AGGREGATE_PATH,
+        method_override="RandomSearch",
+        hyperparams_override={
+            "dimension": int(BOUNDS.shape[0]),
+            "max_evals": int(config["max_evals"]),
+            "n_evals": int(config["max_evals"]),
+        },
+    )
+
     _print_summary(summary)
     print()
     print(f"JSON results: {RAW_DIR}")
+    print(f"Aggregate JSON: {AGGREGATE_PATH}")
     print(f"Figures: {FIGURE_DIR}")
     print(f"Summary JSON: {SUMMARY_PATH}")
 
